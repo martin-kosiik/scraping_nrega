@@ -41,3 +41,9 @@ class AspxSpider(scrapy.Spider):
                 'code': row.xpath('./td[1]/text()').get(),
                 'value': row.xpath('./td[2]/text()').get()
             }
+
+
+# for shell
+# r = FormRequest.from_response(response, formdata=form)
+# fetch(r)
+# view(response)
