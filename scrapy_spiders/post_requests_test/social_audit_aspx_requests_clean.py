@@ -98,22 +98,20 @@ class AspxSpider(scrapy.Spider):
     def parse_panchayat(self, response):
         panchayat_values_list = response.xpath('//*[@id="ContentPlaceHolder1_ddlPanchayat"]/option/@value').getall()
         panchayat_names_list = response.xpath('//*[@id="ContentPlaceHolder1_ddlPanchayat"]/option/text()').getall()
-        panchayat_value = panchayat_values_list[1]
+        #panchayat_value = panchayat_values_list[1]
 #        self.panchayat_value = panchayat_value
         state_value = response.xpath('//*[@id="ContentPlaceHolder1_ddlstate"]/option[@selected="selected"]/@value').get()
         district_value = response.xpath('//*[@id="ContentPlaceHolder1_ddldistrict"]/option[@selected="selected"]/@value').get()
         block_value = response.xpath('//*[@id="ContentPlaceHolder1_ddlBlock"]/option[@selected="selected"]/@value').get()
 
-        form = generate_form(response, level='Panchayat', state_value=state_value, district_value=district_value,
+        #form = generate_form(response, level='Panchayat', state_value=state_value, district_value=district_value,
+        #                        block_value=block_value, panchayat_value=panchayat_value)
+        #yield FormRequest.from_response(response, formdata=form, callback=self.parse_gs_date)
+
+        for panchayat_value in panchayat_values_list[1:]:
+            form = generate_form(response, level='Panchayat', state_value=state_value, district_value=district_value,
                                 block_value=block_value, panchayat_value=panchayat_value)
-        yield FormRequest.from_response(response, formdata=form, callback=self.parse_gs_date)
-
-
-    #    for panchayat_value in panchayat_values_list[1:]:
-    #        self.panchayat_value = panchayat_value
-    #        form = generate_form(response, level='Panchayat', state_value=self.state_value, district_value=self.district_value,
-    #                            block_value=self.block_value, panchayat_value=self.panchayat_value)
-    #        yield FormRequest.from_response(response, formdata=form, callback=self.parse_gs_date)
+            yield FormRequest.from_response(response, formdata=form, callback=self.parse_gs_date)
 
 
     def parse_gs_date(self, response):
