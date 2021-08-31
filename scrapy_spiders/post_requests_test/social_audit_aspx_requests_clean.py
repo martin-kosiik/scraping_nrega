@@ -48,69 +48,96 @@ def generate_form(response, level='state', state_value='17', district_value='0',
 class AspxSpider(scrapy.Spider):
     name = 'sa_aspx'
     start_urls = ['https://mnregaweb4.nic.in/netnrega/SocialAuditFindings/SA-GPReport.aspx?page=S&lflag=eng']
-
+    data_dir_path='C:/Users/marti/OneDrive/Plocha/research_projects/scraping_nrega/scrapy_spiders/post_requests_test/sa_scraped_data.csv'
     custom_settings = {
-            'FEED_URI': 'file://%(data_dir_path)s/sa_scraped_data.csv',
+            'FEED_URI': 'file://' + data_dir_path,
             'FEED_FORMAT': 'csv',
         #    'HTTPCACHE_ENABLED': True,
         #    'POSTSTATS_INTERVAL': 200
         }
 
-    def __init__(self, state_value='17', district_value='0', block_value='0', panchayat_value='0', gs_date_value='0',
-                 data_dir_path='C:/Users/marti/OneDrive/Plocha/research_projects/scraping_nrega/scrapy_spiders/post_requests_test'):
-            super().__init__()
-            self.state_value = state_value
-            self.district_value = district_value
-            self.block_value = block_value
-            self.panchayat_value = panchayat_value
-            self.gs_date_value = gs_date_value
-            self.data_dir_path = data_dir_path
+    # def __init__(self, state_value='17', district_value='0', block_value='0', panchayat_value='0', gs_date_value='0',
+    #              data_dir_path='C:/Users/marti/OneDrive/Plocha/research_projects/scraping_nrega/scrapy_spiders/post_requests_test'):
+    #         super().__init__()
+    #         self.state_value = state_value
+    #         self.district_value = district_value
+    #         self.block_value = block_value
+    #         self.panchayat_value = panchayat_value
+    #         self.gs_date_value = gs_date_value
+    #         self.data_dir_path = data_dir_path
 
 
     def parse(self, response, **kwargs):
-        form = generate_form(response, level='state', state_value=self.state_value)
+        form = generate_form(response, level='state', state_value='17')
 
         yield FormRequest.from_response(response, formdata=form, callback=self.parse_district)
 
     def parse_district(self, response):
         district_values_list = response.xpath('//*[@id="ContentPlaceHolder1_ddldistrict"]/option/@value').getall()
         district_names_list = response.xpath('//*[@id="ContentPlaceHolder1_ddldistrict"]/option/text()').getall()
-        self.district_value = district_values_list[1]
+        district_value = district_values_list[1]
+        #self.district_value = district_values_list[1]
+        state_value = response.xpath('//*[@id="ContentPlaceHolder1_ddlstate"]/option[@selected="selected"]/@value').get()
 
-        form = generate_form(response, level='district', state_value=self.state_value, district_value=self.district_value)
+        form = generate_form(response, level='district', state_value=state_value, district_value=district_value)
         yield FormRequest.from_response(response, formdata=form, callback=self.parse_block)
 
 
     def parse_block(self, response):
         block_values_list = response.xpath('//*[@id="ContentPlaceHolder1_ddlBlock"]/option/@value').getall()
         block_names_list = response.xpath('//*[@id="ContentPlaceHolder1_ddlBlock"]/option/text()').getall()
-        self.block_value = block_values_list[1]
+#        self.block_value = block_values_list[1]
+        block_value = block_values_list[1]
+        state_value = response.xpath('//*[@id="ContentPlaceHolder1_ddlstate"]/option[@selected="selected"]/@value').get()
+        district_value = response.xpath('//*[@id="ContentPlaceHolder1_ddldistrict"]/option[@selected="selected"]/@value').get()
 
-        form = generate_form(response, level='Block', state_value=self.state_value, district_value=self.district_value,
-                                block_value=self.block_value)
+        form = generate_form(response, level='Block', state_value=state_value, district_value=district_value,
+                                block_value=block_value)
         yield FormRequest.from_response(response, formdata=form, callback=self.parse_panchayat)
 
     def parse_panchayat(self, response):
         panchayat_values_list = response.xpath('//*[@id="ContentPlaceHolder1_ddlPanchayat"]/option/@value').getall()
         panchayat_names_list = response.xpath('//*[@id="ContentPlaceHolder1_ddlPanchayat"]/option/text()').getall()
-        self.panchayat_value = panchayat_values_list[1]
+        panchayat_value = panchayat_values_list[1]
+#        self.panchayat_value = panchayat_value
+        state_value = response.xpath('//*[@id="ContentPlaceHolder1_ddlstate"]/option[@selected="selected"]/@value').get()
+        district_value = response.xpath('//*[@id="ContentPlaceHolder1_ddldistrict"]/option[@selected="selected"]/@value').get()
+        block_value = response.xpath('//*[@id="ContentPlaceHolder1_ddlBlock"]/option[@selected="selected"]/@value').get()
 
-        form = generate_form(response, level='Panchayat', state_value=self.state_value, district_value=self.district_value,
-                                block_value=self.block_value, panchayat_value=self.panchayat_value)
+        form = generate_form(response, level='Panchayat', state_value=state_value, district_value=district_value,
+                                block_value=block_value, panchayat_value=panchayat_value)
         yield FormRequest.from_response(response, formdata=form, callback=self.parse_gs_date)
+
+
+    #    for panchayat_value in panchayat_values_list[1:]:
+    #        self.panchayat_value = panchayat_value
+    #        form = generate_form(response, level='Panchayat', state_value=self.state_value, district_value=self.district_value,
+    #                            block_value=self.block_value, panchayat_value=self.panchayat_value)
+    #        yield FormRequest.from_response(response, formdata=form, callback=self.parse_gs_date)
 
 
     def parse_gs_date(self, response):
         gs_date_values_list = response.xpath('//*[@id="ContentPlaceHolder1_ddlGSDate"]/option/@value').getall()
         gs_date_names_list = response.xpath('//*[@id="ContentPlaceHolder1_ddlGSDate"]/option/text()').getall()
+        state_value = response.xpath('//*[@id="ContentPlaceHolder1_ddlstate"]/option[@selected="selected"]/@value').get()
+        district_value = response.xpath('//*[@id="ContentPlaceHolder1_ddldistrict"]/option[@selected="selected"]/@value').get()
+        block_value = response.xpath('//*[@id="ContentPlaceHolder1_ddlBlock"]/option[@selected="selected"]/@value').get()
+        panchayat_value = response.xpath('//*[@id="ContentPlaceHolder1_ddlPanchayat"]/option[@selected="selected"]/@value').get()
+
 
         for gs_date_value in gs_date_values_list[1:]:
-            self.gs_date_value = gs_date_value
-            form = generate_form(response, level='GSDate', state_value=self.state_value, district_value=self.district_value,
-                                 block_value=self.block_value, panchayat_value=self.panchayat_value, gs_date_value=self.gs_date_value)
+            form = generate_form(response, level='GSDate', state_value=state_value, district_value=district_value,
+                                 block_value=block_value, panchayat_value=panchayat_value, gs_date_value=gs_date_value)
             yield FormRequest.from_response(response, formdata=form, callback=self.parse_final)
 
     def parse_final(self, response):
+        state_value = response.xpath('//*[@id="ContentPlaceHolder1_ddlstate"]/option[@selected="selected"]/@value').get()
+        district_value = response.xpath('//*[@id="ContentPlaceHolder1_ddldistrict"]/option[@selected="selected"]/@value').get()
+        block_value = response.xpath('//*[@id="ContentPlaceHolder1_ddlBlock"]/option[@selected="selected"]/@value').get()
+        panchayat_value = response.xpath('//*[@id="ContentPlaceHolder1_ddlPanchayat"]/option[@selected="selected"]/@value').get()
+        gs_date_value = response.xpath('//*[@id="ContentPlaceHolder1_ddlGSDate"]/option[@selected="selected"]/@value').get()
+
+
         sa_start_date = response.xpath('//*[@id="ContentPlaceHolder1_lblSA_start_dt"]/text()').get()
         sa_end_date = response.xpath('//*[@id="ContentPlaceHolder1_lblSA_end_dt"]/text()').get()
         gs_date = response.xpath('//*[@id="ContentPlaceHolder1_lblGramSabha_dt"]/text()').get()
@@ -141,11 +168,11 @@ class AspxSpider(scrapy.Spider):
         qual_report = response.xpath('//*[@id="ContentPlaceHolder1_lblqualitative_report"]/text()').get()
 
         yield {
-            'state_id': self.state_value,
-            'district_id': self.district_value,
-            'block_id': self.block_value,
-            'panchayat_id': self.panchayat_value,
-            'gs_date_value': self.gs_date_value,
+            'state_id': state_value,
+            'district_id': district_value,
+            'block_id': block_value,
+            'panchayat_id': panchayat_value,
+            'gs_date_value': gs_date_value,
             'sa_start_date': sa_start_date,
             'sa_end_date': sa_end_date,
             'gs_date': gs_date,
