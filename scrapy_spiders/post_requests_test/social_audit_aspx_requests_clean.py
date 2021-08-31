@@ -165,6 +165,27 @@ class AspxSpider(scrapy.Spider):
         # Qualitative Report
         qual_report = response.xpath('//*[@id="ContentPlaceHolder1_lblqualitative_report"]/text()').get()
 
+        # Gram Panchayat Checklist
+        # Job Cards
+        job_cards_with_people = response.xpath('//*[@id="ContentPlaceHolder1_Label1"]/text()').get()
+        job_cards_updated = response.xpath('//*[@id="ContentPlaceHolder1_Label3"]/text()').get()
+        job_cards_renewed = response.xpath('//*[@id="ContentPlaceHolder1_Label4"]/text()').get()
+        # Work & Wages
+        demand_process = response.xpath('//*[@id="ContentPlaceHolder1_Label2"]/text()').get()
+        unmet_demand = response.xpath('//*[@id="ContentPlaceHolder1_Label29"]//text()').get()
+        problems_getting_wages = response.xpath('//*[@id="ContentPlaceHolder1_Label30"]//text()').get()
+        # MGNREGS Administration
+        musterrolls_at_worksite_maintained =  response.xpath('//*[@id="ContentPlaceHolder1_Label5"]/text()').get()
+        seven_registers_maintained =  response.xpath('//*[@id="ContentPlaceHolder1_Label17"]/text()').get()
+        # Personnel & Training ContentPlaceHolder1_Label28
+        mates_selected_by_gs =  response.xpath('//*[@id="ContentPlaceHolder1_Label22"]/text()').get()
+        mates_trained =  response.xpath('//*[@id="ContentPlaceHolder1_trmates"]/text()').get()
+        adeq_manpower =  response.xpath('//*[@id="ContentPlaceHolder1_Label24"]/text()').get()
+        person_in_charge_of_nrega_panch = response.xpath('//*[@id="ContentPlaceHolder1_Label25"]/text()').get()
+        person_in_charge_of_nrega_panch_trained = response.xpath('//*[@id="ContentPlaceHolder1_Label27"]/text()').get()
+        tech_support = response.xpath('//*[@id="ContentPlaceHolder1_Label28"]/text()').get()
+
+
         yield {
             'state_id': state_value,
             'district_id': district_value,
@@ -189,7 +210,21 @@ class AspxSpider(scrapy.Spider):
             'total_hh_ver': total_hh_ver,
             'gs_part': gs_part,
             'total_sa_exp': total_sa_exp,
-            'qual_report': qual_report
+            'qual_report': qual_report,
+            'job_cards_with_people': job_cards_with_people,
+            'job_cards_updated': job_cards_updated,
+            'job_cards_renewed': job_cards_renewed,
+            'demand_process': demand_process,
+            'unmet_demand': unmet_demand,
+            'problems_getting_wages': problems_getting_wages,
+            'musterrolls_at_worksite_maintained': musterrolls_at_worksite_maintained,
+            'seven_registers_maintained': seven_registers_maintained,
+            'mates_selected_by_gs': mates_selected_by_gs,
+            'mates_trained': mates_trained,
+            'adeq_manpower': adeq_manpower,
+            'person_in_charge_of_nrega_panch': person_in_charge_of_nrega_panch,
+            'person_in_charge_of_nrega_panch_trained': person_in_charge_of_nrega_panch_trained,
+            'tech_support': tech_support
         }
 
 
