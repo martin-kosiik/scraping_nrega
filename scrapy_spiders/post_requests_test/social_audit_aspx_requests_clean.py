@@ -87,13 +87,19 @@ class AspxSpider(scrapy.Spider):
         block_values_list = response.xpath('//*[@id="ContentPlaceHolder1_ddlBlock"]/option/@value').getall()
         block_names_list = response.xpath('//*[@id="ContentPlaceHolder1_ddlBlock"]/option/text()').getall()
 #        self.block_value = block_values_list[1]
-        block_value = block_values_list[1]
+        #block_value = block_values_list[1]
         state_value = response.xpath('//*[@id="ContentPlaceHolder1_ddlstate"]/option[@selected="selected"]/@value').get()
         district_value = response.xpath('//*[@id="ContentPlaceHolder1_ddldistrict"]/option[@selected="selected"]/@value').get()
 
-        form = generate_form(response, level='Block', state_value=state_value, district_value=district_value,
-                                block_value=block_value)
-        yield FormRequest.from_response(response, formdata=form, callback=self.parse_panchayat)
+        for block_value in block_values_list[1:]:
+            form = generate_form(response, level='Block', state_value=state_value, district_value=district_value,
+                                 block_value=block_value)
+            yield FormRequest.from_response(response, formdata=form, callback=self.parse_panchayat)
+
+
+        #form = generate_form(response, level='Block', state_value=state_value, district_value=district_value,
+        #                        block_value=block_value)
+        #yield FormRequest.from_response(response, formdata=form, callback=self.parse_panchayat)
 
     def parse_panchayat(self, response):
         panchayat_values_list = response.xpath('//*[@id="ContentPlaceHolder1_ddlPanchayat"]/option/@value').getall()
