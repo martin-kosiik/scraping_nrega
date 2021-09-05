@@ -48,7 +48,7 @@ def generate_form(response, level='state', state_value='17', district_value='0',
 class AspxSpider(scrapy.Spider):
     name = 'sa_aspx'
     start_urls = ['https://mnregaweb4.nic.in/netnrega/SocialAuditFindings/SA-GPReport.aspx?page=S&lflag=eng']
-    data_dir_path='C:/Users/marti/OneDrive/Plocha/research_projects/scraping_nrega/scrapy_spiders/post_requests_test/sa_scraped_data_ka.csv'
+    data_dir_path='C:/Users/marti/OneDrive/Plocha/research_projects/scraping_nrega/scrapy_spiders/post_requests_test/sa_scraped_data_ka_all.csv'
     custom_settings = {
             'FEED_URI': 'file://' + data_dir_path,
             'FEED_FORMAT': 'csv',
@@ -75,12 +75,16 @@ class AspxSpider(scrapy.Spider):
     def parse_district(self, response):
         district_values_list = response.xpath('//*[@id="ContentPlaceHolder1_ddldistrict"]/option/@value').getall()
         district_names_list = response.xpath('//*[@id="ContentPlaceHolder1_ddldistrict"]/option/text()').getall()
-        district_value = district_values_list[1]
+        #district_value = district_values_list[1]
         #self.district_value = district_values_list[1]
         state_value = response.xpath('//*[@id="ContentPlaceHolder1_ddlstate"]/option[@selected="selected"]/@value').get()
 
-        form = generate_form(response, level='district', state_value=state_value, district_value=district_value)
-        yield FormRequest.from_response(response, formdata=form, callback=self.parse_block)
+        for district_value in district_values_list[1:]:
+            form = generate_form(response, level='district_values_list', state_value=state_value, district_value=district_value)
+            yield FormRequest.from_response(response, formdata=form, callback=self.parse_block)
+
+        #form = generate_form(response, level='district', state_value=state_value, district_value=district_value)
+        #yield FormRequest.from_response(response, formdata=form, callback=self.parse_block)
 
 
     def parse_block(self, response):
