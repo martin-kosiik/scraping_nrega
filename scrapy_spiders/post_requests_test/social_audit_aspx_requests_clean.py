@@ -48,7 +48,7 @@ def generate_form(response, level='state', state_value='17', district_value='0',
 class AspxSpider(scrapy.Spider):
     name = 'sa_aspx'
     start_urls = ['https://mnregaweb4.nic.in/netnrega/SocialAuditFindings/SA-GPReport.aspx?page=S&lflag=eng']
-    data_dir_path='C:/Users/marti/OneDrive/Plocha/research_projects/scraping_nrega/scrapy_spiders/post_requests_test/sa_scraped_data.csv'
+    data_dir_path='C:/Users/marti/OneDrive/Plocha/research_projects/scraping_nrega/scrapy_spiders/post_requests_test/sa_scraped_data_ka.csv'
     custom_settings = {
             'FEED_URI': 'file://' + data_dir_path,
             'FEED_FORMAT': 'csv',
@@ -68,7 +68,7 @@ class AspxSpider(scrapy.Spider):
 
 
     def parse(self, response, **kwargs):
-        form = generate_form(response, level='state', state_value='17')
+        form = generate_form(response, level='state', state_value='15')
 
         yield FormRequest.from_response(response, formdata=form, callback=self.parse_district)
 
@@ -171,6 +171,28 @@ class AspxSpider(scrapy.Spider):
         # Qualitative Report
         qual_report = response.xpath('//*[@id="ContentPlaceHolder1_lblqualitative_report"]/text()').get()
 
+        # Summary Of Reported Issues
+        fm_reported = response.xpath('//*[@id="ContentPlaceHolder1_divReportedIssue"]//tbody//td[2]/text()').get()
+        fm_closed = response.xpath('//*[@id="ContentPlaceHolder1_divReportedIssue"]//tbody//td[3]/text()').get()
+        fd_reported = response.xpath('//*[@id="ContentPlaceHolder1_divReportedIssue"]//tbody//td[4]/text()').get()
+        fd_closed = response.xpath('//*[@id="ContentPlaceHolder1_divReportedIssue"]//tbody//td[5]/text()').get()
+        pv_reported = response.xpath('//*[@id="ContentPlaceHolder1_divReportedIssue"]//tbody//td[6]/text()').get()
+        pv_closed = response.xpath('//*[@id="ContentPlaceHolder1_divReportedIssue"]//tbody//td[7]/text()').get()
+        griev_reported = response.xpath('//*[@id="ContentPlaceHolder1_divReportedIssue"]//tbody//td[8]/text()').get()
+        griev_closed = response.xpath('//*[@id="ContentPlaceHolder1_divReportedIssue"]//tbody//td[9]/text()').get()
+        total_issues_reported = response.xpath('//*[@id="ContentPlaceHolder1_divReportedIssue"]//tbody//td[10]/text()').get()
+        total_issues_closed = response.xpath('//*[@id="ContentPlaceHolder1_divReportedIssue"]//tbody//td[11]/text()').get()
+
+        # Summary Of Action Taken Report
+        fm_amount = response.xpath('//*[@id="ContentPlaceHolder1_divATR"]//tbody//td[2]/text()').get()
+        fm_amount_recovered = response.xpath('//*[@id="ContentPlaceHolder1_divATR"]//tbody//td[3]/text()').get()
+        fd_amount = response.xpath('//*[@id="ContentPlaceHolder1_divATR"]//tbody//td[4]/text()').get()
+        penalty_paid = response.xpath('//*[@id="ContentPlaceHolder1_divATR"]//tbody//td[5]/text()').get()
+        firs_filled = response.xpath('//*[@id="ContentPlaceHolder1_divATR"]//tbody//td[6]/text()').get()
+        employees_suspended = response.xpath('//*[@id="ContentPlaceHolder1_divATR"]//tbody//td[7]/text()').get()
+        employees_terminated = response.xpath('//*[@id="ContentPlaceHolder1_divATR"]//tbody//td[8]/text()').get()
+
+
         # Gram Panchayat Checklist
         # Job Cards
         job_cards_with_people = response.xpath('//*[@id="ContentPlaceHolder1_Label1"]/text()').get()
@@ -217,6 +239,23 @@ class AspxSpider(scrapy.Spider):
             'gs_part': gs_part,
             'total_sa_exp': total_sa_exp,
             'qual_report': qual_report,
+            'fm_reported': fm_reported,
+            'fm_closed': fm_closed,
+            'fd_reported': fd_reported,
+            'fd_closed': fd_closed,
+            'pv_reported': pv_reported,
+            'pv_closed': pv_closed,
+            'griev_reported': griev_reported,
+            'griev_closed': griev_closed,
+            'total_issues_reported': total_issues_reported,
+            'total_issues_closed': total_issues_closed,
+            'fm_amount': fm_amount,
+            'fm_amount_recovered': fm_amount_recovered,
+            'fd_amount': fd_amount,
+            'penalty_paid': penalty_paid,
+            'firs_filled': firs_filled,
+            'employees_suspended': employees_suspended,
+            'employees_terminated': employees_terminated,
             'job_cards_with_people': job_cards_with_people,
             'job_cards_updated': job_cards_updated,
             'job_cards_renewed': job_cards_renewed,
