@@ -106,17 +106,26 @@ response.xpath('//*/head/title/text()').get()
 import json
 import os
 import pandas as pd
-os.chdir(r'C:\Users\marti\OneDrive\Plocha\research_projects\scraping_nrega\scrapy_spiders\tutorial')
+import urllib.parse
+
+os.chdir(r'C:\Users\marti\OneDrive\Plocha\research_projects\scraping_nrega')
 
 os.listdir()
-# Opening JSON file
-f = open('all_levels_names_and_codes_2.json',)
-
-# returns JSON object as
-# a dictionary
+f = open('scrapy_spiders/tutorial/all_levels_names_and_codes_2.json',)
+# returns JSON object as a dictionary
 data = json.load(f)
-
 f.close()
+
+f = open('scrapy_spiders/tutorial/all_levels_names_and_codes_2_ka.json',)
+# returns JSON object as a dictionary
+data = json.load(f)
+f.close()
+
+f = open('scrapy_spiders/tutorial/tutorial/all_levels_names_and_codes_ka_with_blocks.json',)
+# returns JSON object as a dictionary
+data = json.load(f)
+f.close()
+
 
 
 village_names_list = [x['village_name'] for x in data if x['data_level'] == 'village']
@@ -131,24 +140,56 @@ village_codes_df = pd.DataFrame({'village_name': village_names_list,
 
 
 
-panch_url = village_codes_df['panchayat_url'][0]
+panch_url = village_codes_df['panchayat_url'][0].replace('https://mnregaweb4.nic.in/netnrega/show_censuscode.aspx?', '')
 
-village_codes_df['panchayat_name'] = village_codes_df['panchayat_url'].str.extract('&panchayat_name=([^&]+)&')
-village_codes_df['panchayat_code'] = village_codes_df['panchayat_url'].str.extract('&panchayat_code=(\d+)&')
+panch_url
 
-village_codes_df['block_name'] = village_codes_df['panchayat_url'].str.extract('&block_name=([^&]+)&')
-village_codes_df['block_code'] = village_codes_df['panchayat_url'].str.extract('&block_code=(\d+)&')
+panchayat_dicts = village_codes_df['panchayat_url'].str.replace('https://mnregaweb4.nic.in/netnrega/show_censuscode.aspx?', '').apply(lambda x: dict(urllib.parse.parse_qsl(x)))
+#panchayat_dicts.apply(lambda x: x['district_name'])
 
-village_codes_df['district_name'] = village_codes_df['panchayat_url'].str.extract('&district_name=([^&]+)&')
+
+dict(urllib.parse.parse_qsl(panch_url))
+
+
+village_codes_df['panchayat_name'] = panchayat_dicts.apply(lambda x: x['panchayat_name'])
+village_codes_df['panchayat_code'] = panchayat_dicts.apply(lambda x: x['panchayat_code'])
+
+village_codes_df['block_name'] = panchayat_dicts.apply(lambda x: x['block_name'])
+village_codes_df['block_code'] = panchayat_dicts.apply(lambda x: x['block_code'])
+
+village_codes_df['district_name'] = panchayat_dicts.apply(lambda x: x['district_name'])
 
 
 
 district_names_list = [x['district_name'] for x in data if x['data_level'] == 'district']
 district_code_list = [x['district_census_code'] for x in data if x['data_level'] == 'district']
 
+block_names_list
+
+block_names_list = [x['block_name'] for x in data if x['data_level'] == 'block']
+block_code_list = [x['block_census_code'] for x in data if x['data_level'] == 'block']
+block_link = [x['block_link'] for x in data if x['data_level'] == 'block']
+
+block_dicts = [dict(urllib.parse.parse_qsl(x.replace('https://mnregaweb4.nic.in/netnrega/show_censuscode.aspx?', ''))) for x in block_link]
+block_codes = [x['block_code'] for x in block_dicts]
+
+
+#block_names_list.__len__()
 
 district_codes_df = pd.DataFrame({'district_name': district_names_list,
                                  'district_census_code': district_code_list})
+
+block_codes_df = pd.DataFrame({'block_name_in_table': block_names_list,
+                                 'block_census_code': block_code_list,
+                                 'block_code': block_codes})
+
+
+
+block_code_len = block_codes_df['block_census_code'].apply(len)
+
+block_codes_df.loc[block_code_len != 4, 'block_census_code'] = 'missing'
+
+block_codes_df.block_code.value_counts()
 
 district_codes_df.dtypes
 
@@ -157,18 +198,54 @@ village_codes_df.dtypes
 village_codes_df.join(district_codes_df, how='left', on='district_name')
 
 village_codes_df = pd.merge(village_codes_df, district_codes_df, how='left', on='district_name')
+village_codes_df = pd.merge(village_codes_df, block_codes_df, how='left', on='block_code')
+
+village_codes_df.to_csv('analysis/census_villages_ka.csv', index=False)
+
+village_codes_df
+
+ka_census_codes = pd.read_excel('census_codes_ka.xls', skiprows=1)
+ka_census_codes['level'] = 'village'
+ka_census_codes.loc[(ka_census_codes['MDDS PLCN'] == 0) & (ka_census_codes['MDDS Sub_DT'] != 0) & (ka_census_codes['MDDS DTC'] != 0) & (ka_census_codes['MDDS DTC'] != 0) ,'level'] = 'block'
+ka_census_codes_blocks = ka_census_codes.loc[ka_census_codes['level'] == 'block']
+
+
+ka_census_codes_blocks
+
+MDDS PLCN
+
+village_codes_df.columns
+
+block_codes_merged_df = village_codes_df[[ 'block_name', 'block_code', 'district_name', 'district_census_code', 'block_name_in_table', 'block_census_code']].drop_duplicates(subset=['block_name'])
+
+block_codes_merged_df[block_codes_merged_df.district_census_code == '570']
+
+block_codes_merged_df.sort_values('block_name')
+block_codes_merged_df.value_counts('block_census_code')
+
+
+ka_census_codes_blocks.sort_values('MDDS NAME OF STATE, DISTRICT, SUB-DISTTS. & VILLAGES')[100:150]
 
 
 village_codes_df['state_name'] = village_codes_df['panchayat_url'].str.extract('&state_name=([^&]+)&')
 village_codes_df['state_code'] = village_codes_df['panchayat_url'].str.extract('&state_code=(\d+)&')
 
+village_codes_df['panchayat_code'].value_counts()
+
+village_codes_df.drop_duplicates(subset=['panchayat_code', 'district_census_code'])
 
 
+census_villages = village_codes_df.drop_duplicates(subset=['village_census_code', 'block_code', 'district_census_code'])
 
+census_villages.to_csv('analysis/census_villages_ka.csv')
 
 
 panch_url.extract('&block_code=\d+&')
 
 village_names_list.__len__()
 village_code_list.__len__()
-data
+
+
+audits_ka = pd.read_csv('post_requests_test/sa_scraped_data_ka_all.csv')
+
+audits_ka.unmet_demand.value_counts()
