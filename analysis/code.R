@@ -1,7 +1,7 @@
 library(tidyverse)
 library(here)
 library(haven)
-
+library(rdrobust)
 library(readxl)
 census_codes_ka <- read_excel("C:/Users/marti/OneDrive/Plocha/research_projects/scraping_nrega/census_codes_ka.xls", 
                               skip = 1)
@@ -178,7 +178,10 @@ audits_raw_mp <- read_csv("C:/Users/marti/OneDrive/Plocha/research_projects/scra
 audits_raw_mp %>% 
   count(unmet_demand)
 
-
+audits_raw_mp <- audits_raw_mp %>% 
+  mutate(diff_in_total_exp = total_exp - total_given,
+         diff_in_total_exp_pct = abs(diff_in_total_exp)/ total_given,
+         diff_in_total_exp_log = log(abs(diff_in_total_exp) + 1))
 
 audits_by_panch <- audits_raw_mp %>% 
   mutate(unmet_demand_dummy = unmet_demand %in% c('Yes, Huge Demand', 'Yes, Some Demand'),
@@ -191,7 +194,10 @@ audits_by_panch <- audits_raw_mp %>%
             mean_unmet_demand_scale = mean(unmet_demand_scale, na.rm = T),
             mean_issues_rep = mean(total_issues_reported, na.rm = T),
             mean_fm_amount = mean(fm_amount, na.rm = T),
-            mean_fm_rep =  mean(fm_reported, na.rm = T)
+            mean_fm_rep =  mean(fm_reported, na.rm = T),
+            diff_in_total_exp_pct =  mean(diff_in_total_exp_pct, na.rm = T),
+            diff_in_total_exp_log =  mean(diff_in_total_exp_log, na.rm = T)
+            
   )
 
 
@@ -217,6 +223,55 @@ panchayats_mp <- census_villages_mp_merged %>%
   ungroup() %>% 
   group_by(panchayat_code) %>% 
   summarize(total_pop_2011 = sum(pc11_pca_tot_p, na.rm = T),
-            mean_unmet_demand_scale = mean(mean_unmet_demand_scale, na.rm = T))
+            mean_unmet_demand_scale = mean(mean_unmet_demand_scale, na.rm = T),
+            diff_in_total_exp_pct =  mean(diff_in_total_exp_pct, na.rm = T),
+            diff_in_total_exp_log =  mean(diff_in_total_exp_log, na.rm = T)
+            )
   #mutate()
-  
+ 
+
+panchayats_mp
+
+# funding provided under Panch Parmeshwar Yojana
+# 
+
+
+panchayats_mp <- panchayats_mp %>% 
+  mutate(relative_pop = case_when(total_pop_2011 < 3501 ~ total_pop_2011 - 2000,
+                                  (total_pop_2011 > 3500) & (total_pop_2011 < 7501) ~ total_pop_2011 - 5000,
+                                  total_pop_2011 > 7500 ~ total_pop_2011 - 10000))
+
+
+
+y_var <- panchayats_mp$mean_unmet_demand_scale
+est <- rdrobust(y=y_var, x=panchayats_mp$relative_pop, p=1, c = 0)
+rdplot(y=y_var, x=panchayats_mp$relative_pop, subset=-est$bws[1,1]<= panchayats_mp$relative_pop & panchayats_mp$relative_pop <= est$bws[1,2],
+       binselect="esmv", kernel="triangular", h=c(est$bws[1,1], est$bws[1,2]), p=1,
+       title="", 
+       y.label="Degree of unmet demand for work",
+       x.label="Population relative to the program threshold")
+
+
+summary(est)
+
+est <- rdrobust(y=y_var, x=panchayats_mp$relative_pop, p=2, c = 0)
+rdplot(y=y_var, x=panchayats_mp$relative_pop, subset=-est$bws[1,1]<= panchayats_mp$relative_pop & panchayats_mp$relative_pop <= est$bws[1,2],
+       binselect="esmv", kernel="triangular", h=c(est$bws[1,1], est$bws[1,2]), p=2,
+       title="", 
+       y.label="Degree of unmet demand for work",
+       x.label="Population relative to the program threshold")
+
+
+summary(est)
+
+
+y_var <- panchayats_mp$diff_in_total_exp_log
+est <- rdrobust(y=y_var, x=panchayats_mp$relative_pop, p=1, c = 0)
+rdplot(y=y_var, x=panchayats_mp$relative_pop, subset=-est$bws[1,1]<= panchayats_mp$relative_pop & panchayats_mp$relative_pop <= est$bws[1,2],
+       binselect="esmv", kernel="triangular", h=c(est$bws[1,1], est$bws[1,2]), p=1,
+       title="", 
+       y.label="Degree of unmet demand for work",
+       x.label="Population relative to the program threshold")
+
+
+
